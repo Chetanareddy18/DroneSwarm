@@ -56,3 +56,4 @@ src/simulation/dataset_lvl5/
 # =========================
 .DS_Store
 Thumbs.db
+output/
