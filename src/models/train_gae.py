@@ -1,114 +1,59 @@
-import os
-import numpy as np
 import torch
-import torch.nn.functional as F
-from torch.optim import Adam
-from sklearn.metrics import roc_auc_score
-
+import torch.optim as optim
 from gae_model import GraphAutoEncoder
+from graph_utils import build_graph
 
-# =========================
-# PATHS
-# =========================
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, "..", ".."))
-
-GRAPH_DIR = os.path.join(PROJECT_ROOT, "data", "graphs")
-MODEL_DIR = os.path.join(PROJECT_ROOT, "data", "models")
-os.makedirs(MODEL_DIR, exist_ok=True)
-
-# =========================
-# DEVICE
-# =========================
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("💻 Using device:", device)
-
-# =========================
-# HYPERPARAMETERS
-# =========================
-INPUT_DIM = 3
-HIDDEN_DIM = 16
-LATENT_DIM = 8
+# Hyperparameters
+INPUT_DIM = 4
+HIDDEN_DIM = 32
+LATENT_DIM = 16
 LR = 0.01
-EPOCHS = 50
+EPOCHS = 200
 
-# =========================
-# NORMALIZATION
-# =========================
-def normalize_adj(adj):
-    rowsum = adj.sum(1)
-    d_inv_sqrt = torch.pow(rowsum, -0.5)
-    d_inv_sqrt[torch.isinf(d_inv_sqrt)] = 0.0
-    D_inv_sqrt = torch.diag(d_inv_sqrt)
-    return D_inv_sqrt @ adj @ D_inv_sqrt
+# Build Graph
+x, adj, adj_norm = build_graph()
 
-# =========================
-# METRICS
-# =========================
-def link_metrics(adj_true, adj_pred):
-    adj_true = adj_true.flatten().cpu().numpy()
-    adj_pred = adj_pred.flatten().detach().cpu().numpy()
+# Remove diagonal from training
+adj = adj.clone()
+adj.fill_diagonal_(0)
 
-    adj_bin = (adj_pred > 0.5).astype(int)
-    acc = (adj_true == adj_bin).mean()
+# Model
+model = GraphAutoEncoder(INPUT_DIM, HIDDEN_DIM, LATENT_DIM)
+optimizer = optim.Adam(model.parameters(), lr=LR)
 
-    auc = roc_auc_score(adj_true, adj_pred)
-    return acc, auc
+# Handle class imbalance
+pos_weight = (adj == 0).sum() / (adj == 1).sum()
+criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
-# =========================
-# LOAD DATA
-# =========================
-graph_files = sorted([f for f in os.listdir(GRAPH_DIR) if f.endswith(".npz")])
-print(f"📦 Found {len(graph_files)} graph snapshots")
+print("Training Started...\n")
 
-# =========================
-# MODEL
-# =========================
-model = GraphAutoEncoder(INPUT_DIM, HIDDEN_DIM, LATENT_DIM).to(device)
-optimizer = Adam(model.parameters(), lr=LR)
-
-# =========================
-# TRAINING
-# =========================
 for epoch in range(EPOCHS):
-    total_loss = 0
-    total_acc = 0
-    total_auc = 0
+    model.train()
+    optimizer.zero_grad()
 
-    for file in graph_files:
-        data = np.load(os.path.join(GRAPH_DIR, file))
+    # Forward
+    adj_logits = model(x, adj_norm)
 
-        x = torch.tensor(data["node_features"], dtype=torch.float32).to(device)
-        adj = torch.tensor(data["adjacency"], dtype=torch.float32).to(device)
+    # Loss
+    loss = criterion(adj_logits, adj)
 
-        # Binary adjacency
-        adj = (adj > 0).float()
-        adj = adj + torch.eye(adj.size(0)).to(device)
+    # Backpropagation
+    loss.backward()
+    optimizer.step()
 
-        adj_norm = normalize_adj(adj)
+    # Accuracy calculation
+    with torch.no_grad():
+        preds = torch.sigmoid(adj_logits)
+        predicted = (preds > 0.5).float()
 
-        optimizer.zero_grad()
-        adj_recon, _ = model(x, adj_norm)
+        correct = (predicted == adj).sum().item()
+        total = adj.numel()
+        accuracy = correct / total
 
-        loss = F.binary_cross_entropy(adj_recon, adj)
-        loss.backward()
-        optimizer.step()
+    if epoch % 20 == 0:
+        print(f"Epoch {epoch} | Loss: {loss.item():.4f} | Accuracy: {accuracy:.4f}")
 
-        acc, auc = link_metrics(adj, adj_recon)
+# Save model
+torch.save(model.state_dict(), "gae_trained.pth")
 
-        total_loss += loss.item()
-        total_acc += acc
-        total_auc += auc
-
-    print(
-        f"Epoch [{epoch+1}/{EPOCHS}] "
-        f"Loss: {total_loss/len(graph_files):.4f} | "
-        f"Acc: {total_acc/len(graph_files):.4f} | "
-        f"AUC: {total_auc/len(graph_files):.4f}"
-    )
-
-# =========================
-# SAVE
-# =========================
-torch.save(model.state_dict(), os.path.join(MODEL_DIR, "gae_model.pth"))
-print("✅ Training completed and model saved")
+print("\nTraining Finished & Model Saved.")

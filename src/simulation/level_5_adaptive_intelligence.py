@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import random
+import numpy as np
+import os
+
 
 # ==========================
 # PARAMETERS
@@ -21,6 +24,9 @@ MIN_HELPERS = 4
 
 DT = 1.0
 MAX_FRAMES = 350
+
+adjacency_logs = []
+
 
 # ==========================
 # INIT
@@ -110,6 +116,9 @@ def update(frame):
 
     # -------- GRAPH --------
     adj = build_graph(comm_radius)
+    # Store adjacency snapshot
+    adjacency_logs.append(adj.copy())
+
 
     # -------- RL DECISION --------
     state = get_global_state(adj)
@@ -178,3 +187,8 @@ ax.set_ylim(0, AREA_SIZE)
 scat = ax.scatter(positions[:, 0], positions[:, 1], s=70)
 ani = FuncAnimation(fig, update, frames=MAX_FRAMES, interval=40)
 plt.show()
+
+# Save adjacency logs after simulation ends
+os.makedirs("data", exist_ok=True)
+np.save("data/adjacency_logs.npy", np.array(adjacency_logs))
+print("Adjacency logs saved successfully.")
