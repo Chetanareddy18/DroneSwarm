@@ -9,10 +9,9 @@
 
 ---
 
-## 📺 Demo & Report
+## 📺 Demo
 
-- 🎬 **Demo video:** [`docs/DroneSwarm_demo.mp4`](docs/DroneSwarm_demo.mp4)
-- 📄 **Project report:** [`docs/Project_Report.docx`](docs/Project_Report.docx)
+> 🎬 Demo video coming soon on YouTube — link will be added here!
 
 ---
 
