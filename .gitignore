@@ -57,3 +57,31 @@ src/simulation/dataset_lvl5/
 .DS_Store
 Thumbs.db
 output/
+*.json
+*.csv
+
+# =========================
+# Unity (unity_simulation/)
+# =========================
+unity_simulation/Library/
+unity_simulation/Temp/
+unity_simulation/Obj/
+unity_simulation/Build/
+unity_simulation/Builds/
+unity_simulation/Logs/
+unity_simulation/UserSettings/
+unity_simulation/MemoryCaptures/
+unity_simulation/.vs/
+unity_simulation/*.csproj
+unity_simulation/*.sln
+unity_simulation/*.suo
+unity_simulation/*.user
+unity_simulation/*.userprefs
+unity_simulation/*.pidb
+unity_simulation/*.booproj
+unity_simulation/*.svd
+unity_simulation/*.unityproj
+unity_simulation/*.app
+
+# Allow video and report inside docs/ even though *.json is ignored
+!docs/**
