@@ -71,11 +71,8 @@ Drones move → Distances update → Graph rebuilt
 DRONE_SWARM/
 ├── README.md
 ├── .gitignore
+├── .gitattributes                   # Git LFS config
 ├── test.py                          # quick numpy sanity check
-│
-├── docs/                            # 📺 demo video + 📄 report
-│   ├── DroneSwarm_demo.mp4
-│   └── Project_Report.docx
 │
 ├── src/
 │   ├── simulation/                  # All swarm simulation levels
@@ -94,14 +91,15 @@ DRONE_SWARM/
 │   │   ├── graph_gan.py             # Graph GAN (generator + discriminator)
 │   │   ├── graph_diffusion.py       # Scalable diffusion repair model
 │   │   ├── hierarchical_graph_rl.py # Encoder + DQN
-│   │   ├── train_gae.py / train_vgae.py
-│   │   ├── train_graph_gan.py
-│   │   ├── train_graph_diffusion.py
-│   │   ├── train_hierarchical_rl.py
-│   │   ├── train_multi_agent_rl.py  # per-drone DQN agent
+│   │   ├── train_gae.py             # GAE training
+│   │   ├── train_vgae.py            # VGAE training
+│   │   ├── train_graph_gan.py       # GAN training
+│   │   ├── train_graph_diffusion.py # Diffusion training
+│   │   ├── train_hierarchical_rl.py # Hierarchical RL training
+│   │   ├── train_multi_agent_rl.py  # per-drone DQN agent training
 │   │   ├── rl_system_controller.py  # RL + Diffusion runtime controller
 │   │   ├── orchestrator.py          # 🎛 Final multi-model orchestrator
-│   │   └── saved_models/*.pth       # trained checkpoints
+│   │   └── saved_models/            # trained checkpoints (git-ignored)
 │   │
 │   ├── evaluation/
 │   │   └── graph_dataset.py         # PyG dataset wrapper
@@ -124,8 +122,10 @@ DRONE_SWARM/
     │   │   ├── DroneSwarm.cs        # per-drone physics + steering
     │   │   └── SwarmManager.cs      # spawning, formations, failure
     │   ├── Drone/                   # drone art + prefabs
-    │   ├── Prefabs/, Models/, Scenes/, Settings/
-    │   └── ...
+    │   ├── Models/
+    │   ├── Prefabs/
+    │   ├── Scenes/
+    │   └── Settings/
     ├── Packages/
     └── ProjectSettings/
 ```
@@ -376,10 +376,4 @@ This project demonstrates a **multi-model intelligent drone swarm communication 
 
 > **In one line:** an adaptive, self-healing, graph-learning powered intelligent drone swarm — visualized end-to-end.
 
----
 
-## 👤 Author
-
-**Chetana Reddy** — [@Chetanareddy18](https://github.com/Chetanareddy18)
-
-Applicative Project 2 · 2026
